@@ -3,6 +3,7 @@
 @section('content')
 @include('instructor.header')
 @include('instructor.sidebar')
+
 <div class="content-wrapper">
     <section class="content-header">
         <div class="container-fluid">
@@ -31,8 +32,8 @@
                         </div>
                         <div class="card-body">
                             @foreach($viewExercise as $view)
-                            <form action="{{ route('exercises.updateExercise') }}" method="POST">
-                                {{ csrf_field() }}
+                            <form action="{{ route('exercises.updateExercise') }}" method="POST" enctype="multipart/form-data">
+                                @csrf
                                 <input type="hidden" name="id_exercise" value="{{ $view->id_exercise }}">
                                 <div class="form-group">
                                     <label for="project_name">Project Name</label>
@@ -51,7 +52,7 @@
                                     <textarea class="form-control" id="sejarah_produksi" name="sejarah_produksi" rows="10">{{ $view->sejarah_produksi }}</textarea>
                                 </div>
                                 <div class="form-group">
-                                    <label for="spesifikasi">spesifikasi</label>
+                                    <label for="spesifikasi">Spesifikasi</label>
                                     <textarea class="form-control" id="spesifikasi" name="spesifikasi" rows="10">{{ $view->spesifikasi }}</textarea>
                                 </div>
                                 <div class="form-group">
@@ -59,28 +60,60 @@
                                     <textarea class="form-control" id="kinerja" name="kinerja" rows="10">{{ $view->kinerja }}</textarea>
                                 </div>
                                 <div class="form-group">
-                                    <label for="persenjataan">persenjataan</label>
+                                    <label for="persenjataan">Persenjataan</label>
                                     <textarea class="form-control" id="persenjataan" name="persenjataan" rows="10">{{ $view->persenjataan }}</textarea>
                                 </div>
                                 <div class="form-group">
-                                    <label for="type">Type</label>
-                                    <select class="select2" name="actions[{{  }}][type]" style="width: 100%" onchange="updateMediaInput()">
+                                    <label for="media_type">media_type</label>
+                                    <select class="form-control select2" name="media_type" style="width: 100%" onchange="updateMediaInput(this)">
                                         <option value="" disabled> Pilih tipe</option>
-                                        <option value="Picture" @if ($list->type == "Picture") selected @endif>Picture</option>
-                                        <option value="Video" @if ($list->type == "Video") selected @endif>Video</option>
-                                        <option value="Youtube" @if ($list->type == "Youtube") selected @endif>Youtube</option>
+                                        <option value="Picture" @if ($view->media_type == "Picture") selected @endif>Picture</option>
+                                        <option value="Video" @if ($view->media_type == "Video") selected @endif>Video</option>
+                                        <option value="Youtube" @if ($view->media_type == "Youtube") selected @endif>Youtube</option>
                                     </select>
                                 </div>
-                                <div class="form-group media-upload-group-{{  }}" style="display: none;">
+                                <div class="form-group media-upload-group" style="display: none;">
                                     <label for="media_upload">Media Upload</label>
-                                    <input type="file" class="form-control" name="actions[{{  }}][media_upload]">
+                                    <input type="file" class="form-control" name="media_upload">
                                 </div>
-                                <div class="form-group media-link-group-{{  }}" style="display: none;">
+                                <div class="form-group media-link-group" style="display: none;">
                                     <label for="media_link">Media Link</label>
-                                    <input type="text" class="form-control" name="actions[{{  }}][media_link]" value="{{ $list->type == 'Youtube' ? $list->media_name : '' }}">
+                                    <input type="text" class="form-control" name="media_link" value="{{ $view->media_type == 'Youtube' ? $view->media_name : '' }}">
+                                </div>
+                                <div>
+                                    @if ($view->media_name)
+                                    <div class="media-body">
+                                        <label for="media_preview">Media Preview</label>
+                                        <br>
+                                        @if ($view->media_type == 'Video')
+                                        <video width="320" height="240" controls>
+                                            <source src="{{ url('http://'.env('DB_HOST').'/test_upload/'.$view->media_name) }}" type="video/mp4">
+                                            Browser tidak support video
+                                        </video>
+                                        @elseif ($view->media_type == 'Youtube')
+                                        <br><a href="{{ $view->media_name }}" target="_blank">{{ $view->media_name }}</a>
+                                        @elseif ($view->media_type == 'Picture')
+                                        <img src="{{ url('http://'.env('DB_HOST').'/test_upload/'.$view->media_name) }}" alt="Media Preview" width="320" height="240">
+                                        @endif
+                                    </div>
+                                    @else
+                                    <div class="media-body">
+                                        <label for="media_preview">Media Preview</label>
+                                        <br>
+                                        @if ($view->media_type == 'Video')
+                                        <video width="320" height="240" controls>
+                                            <source src="{{ Storage::url('media_upload/default_image.jpg') }}" type="video/mp4">
+                                            Browser tidak support video
+                                        </video>
+                                        @elseif ($view->media_type == 'Youtube')
+                                        <br><a href="{{ $view->media_name }}" target="_blank">{{ $view->media_name }}</a>
+                                        @elseif ($view->media_type == 'Picture')
+                                        <img src="{{ Storage::url('media_upload/default_image.jpg') }}" alt="Media Preview" width="320" height="240">
+                                        @endif
+                                    </div>
+                                    @endif
                                 </div>
                                 <div class="form-group float-right">
-                                    {{-- <button class="btn btn-lg btn-danger" type="reset">Reset</button> --}}
                                     <button class="btn btn-lg btn-primary" type="submit">Submit</button>
                                 </div>
                             </form>
@@ -95,15 +128,6 @@
                             <h3 class="card-title">Part Name</h3>
                         </div>
 
-                        {{-- <div class="media">
-                            <img class="mr-3" src="..." alt="Generic placeholder image">
-                            <div class="media-body">
-                            <h5 class="mt-0">Media heading</h5>
-                            Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque ante sollicitudin. Cras purus odio, vestibulum in vulputate at, tempus viverra turpis. Fusce condimentum nunc ac nisi vulputate fringilla. Donec lacinia congue felis in faucibus.
-                            </div>
-                        </div> --}}
-
-
                         <div class="card-body">
                             <form action="{{ route('exercises.updateactionExercise') }}" method="POST" enctype="multipart/form-data">
                                 @csrf
@@ -115,13 +139,27 @@
                                         <label for="media_preview">Media Preview</label>
                                         @if ($list->type == 'Video')
                                         <video width="320" height="240" controls>
-                                            <source src="{{ Storage::url('media/'.$list->media_name) }}" type="video/mp4">
-                                            Your browser does not support the video tag.
+                                            <source src="{{ url('http://'.env('DB_HOST').'/test_upload/'.$list->media_name) }}" type="video/mp4">
+                                            Browser tidak support video
                                         </video>
                                         @elseif ($list->type == 'Youtube')
                                         <br><a href="{{ $list->media_name }}" target="_blank">{{ $list->media_name }}</a>
                                         @elseif ($list->type == 'Picture')
-                                        <img src="{{ Storage::url('media/'.$list->media_name) }}" alt="Media Preview" width="320" height="240">
+                                        <img src="{{ url('http://'.env('DB_HOST').'/test_upload/'.$list->media_name) }}" alt="Media Preview" width="320" height="240">
+                                        @endif
+                                    </div>
+                                    @else
+                                    <div class="media-body">
+                                        <label for="media_preview">Media Preview</label>
+                                        @if ($list->type == 'Video')
+                                        <video width="320" height="240" controls>
+                                            <source src="{{ Storage::url('media_upload/default_image.jpg') }}" type="video/mp4">
+                                            Browser tidak support video
+                                        </video>
+                                        @elseif ($list->type == 'Youtube')
+                                        <br><a href="{{ $list->media_name }}" target="_blank">{{ $list->media_name }}</a>
+                                        @elseif ($list->type == 'Picture')
+                                        <img src="{{ Storage::url('media_upload/default_image.jpg') }}" alt="Media Preview" width="320" height="240">
                                         @endif
                                     </div>
                                     @endif
@@ -133,7 +171,7 @@
                                         </div>
                                         <div class="form-group">
                                             <label for="type">Type</label>
-                                            <select class="select2" name="actions[{{ $loop->index }}][type]" style="width: 100%" onchange="updateMediaInput(this, {{ $loop->index }})">
+                                            <select class="form-control select2" name="actions[{{ $loop->index }}][type]" style="width: 100%" onchange="updateMediaInput(this, {{ $loop->index }})">
                                                 <option value="" disabled> Pilih tipe</option>
                                                 <option value="Picture" @if ($list->type == "Picture") selected @endif>Picture</option>
                                                 <option value="Video" @if ($list->type == "Video") selected @endif>Video</option>
@@ -153,14 +191,10 @@
                                 <hr>
                                 @endforeach
                                 <div class="form-group float-right">
-                                    {{-- <button class="btn btn-lg btn-danger" type="reset">Reset</button> --}}
                                     <button class="btn btn-lg btn-primary" type="submit">Submit</button>
                                 </div>
                             </form>
                         </div>
-
-
-
                     </div>
                 </div>
             </div>
@@ -169,10 +203,10 @@
 </div>
 
 <script>
-    function updateMediaInput(selectElement, index) {
+    function updateMediaInput(selectElement, index = null) {
         var type = selectElement.value;
-        var mediaUploadGroup = document.querySelector('.media-upload-group-' + index);
-        var mediaLinkGroup = document.querySelector('.media-link-group-' + index);
+        var mediaUploadGroup = index !== null ? document.querySelector('.media-upload-group-' + index) : document.querySelector('.media-upload-group');
+        var mediaLinkGroup = index !== null ? document.querySelector('.media-link-group-' + index) : document.querySelector('.media-link-group');
 
         if (type === 'Picture' || type === 'Video') {
             mediaUploadGroup.style.display = 'block';

@@ -46,17 +46,32 @@ class ExerciseController extends Controller
     }
 
     public function updateExercise(Request $request) {
-        exercise::where('id_exercise', $request->id_exercise)
-                ->update([
-                    'deskripsi'     => $request['deskripsi'],
-                    'sejarah_pemakaian'     => $request['sejarah_pemakaian'],
-                    'sejarah_produksi'     => $request['sejarah_produksi'],
-                    'spesifikasi'     => $request['spesifikasi'],
-                    'kinerja'     => $request['kinerja'],
-                    'persenjataan'     => $request['persenjataan'],
-                    'sejarah_pemakaian'     => $request['sejarah_pemakaian'],
-                ]);
-        return redirect('instructor/scenarios')->with('info','Exercise updated successfully!');
+        $exercise = exercise::where('id_exercise', $request->id_exercise)->first();
+
+        $exercise->deskripsi = $request['deskripsi'];
+        $exercise->sejarah_pemakaian = $request['sejarah_pemakaian'];
+        $exercise->sejarah_produksi = $request['sejarah_produksi'];
+        $exercise->spesifikasi = $request['spesifikasi'];
+        $exercise->kinerja = $request['kinerja'];
+        $exercise->persenjataan = $request['persenjataan'];
+        $exercise->media_type = $request['media_type'];
+
+        if ($request['media_type'] == 'Youtube') {
+            $exercise->media_name = $request['media_link'];
+        } else {
+            if ($request->hasFile('media_upload')) {
+            $file = $request->file('media_upload');
+            $filename =  $file->getClientOriginalName();
+            // $path = $file->storeAs('C:\laragon\www', $filename);
+            $path = 'C:/laragon/www/test_upload' . $filename;
+            $file->move('C:/laragon/www/test_upload', $filename);
+            $exercise->media_name = $filename;
+            }
+        }
+
+        $exercise->save();
+
+        return redirect('instructor/scenarios')->with('info', 'Exercise updated successfully!');
     }
     public function updateactionExercise(Request $request) {
         foreach ($request->actions as $key => $action) {
@@ -71,7 +86,9 @@ class ExerciseController extends Controller
                 if ($request->hasFile('actions.' . $key . '.media_upload')) {
                     $file = $request->file('actions.' . $key . '.media_upload');
                     $filename = $file->getClientOriginalName();
-                    $path = $file->storeAs('public/media', $filename);
+                    // $path = $file->storeAs('C:\laragon\www', $filename);
+                    $path = 'C:/laragon/www/test_upload' . $filename;
+                    $file->move('C:/laragon/www/test_upload', $filename);
                     $scenarioAction->media_name = $filename;
                 }
             }
